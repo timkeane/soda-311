@@ -1,0 +1,87 @@
+html, body, h1, #map, #splash {
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+}
+h1, #map {
+	display: flex;
+	align-content: center; 
+	position: fixed;
+}
+.ui-mobile-viewport h1 {
+	font-size: 24px;
+	bottom: calc(100% - 45px);
+	background-color: #000;
+	color: #fff;
+	margin: 0;
+	padding: 8px 0 0 83px;
+	z-index: 1;
+}
+
+h1 img {
+	position: fixed;
+	top: 3px;
+	left: 3px;
+	height: 24px;
+	width: 71px;
+	margin: 8px 0 0 0;
+	cursor: pointer;
+}
+#map {
+	position: fixed;
+	left: 0;
+	bottom: 0;
+	top: 45px;
+}
+#map {
+	width: calc(100% - 320px);
+}
+
+/* ========================== begin panel ======================== */
+
+#panel {
+    position: fixed;
+	width: 310px;
+	top: 45px;
+	right: 0;
+	bottom: 0;	
+    z-index: 1000;
+	box-shadow: 5px 10px 20px 5px rgba(0,0,0,.2);
+	padding: 0;
+	background-color: white;
+	padding: 5px;
+	overflow-x: hidden;
+	overflow-y: auto;
+}
+#record-count {
+	position: fixed;
+	right: 5px;
+	z-index: 1000;
+}
+#record-count, #record-count span {
+	color: #fff;
+}
+
+/* =========================== end panel ========================= */
+
+#date-ranges div.fields {
+	border: 1px solid rgb(221,221,221);
+	border-radius: 3px;
+	background-color: #f6f6f6;
+}
+#date-ranges div.field {
+	padding: 0 10px;
+}
+#date-ranges div.field:first-of-type {
+	border-bottom: 1px solid rgb(221,221,221);
+}
+#date-ranges label, #date-ranges div.ui-input-text {
+	display: inline-block;
+}
+#date-ranges div.ui-input-text {
+}
+#date-ranges label {
+	width: 25%;
+	font-weight: bold;
+}
