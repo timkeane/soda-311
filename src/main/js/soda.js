@@ -29,9 +29,13 @@ nyc.sr.App.prototype = {
 		$('#created-date-min').val(lastWeek.toISOString().split('T')[0]);
 		$('#created-date-max').val(today.toISOString().split('T')[0]);
 	},
-	getCdName: function(cdNum){
+	getCdDisplay: function(cdNum){
 		var cd = cdNum + '';
 		return this.BOROS[cd.substr(0, 1)] + ' ' + (1 * cd.substr(1));
+	},
+	getCdValue: function(cdNum){
+		var cd = cdNum + '';
+		return cd.substr(1) + ' ' + this.BOROS[cd.substr(0, 1)].toUpperCase();
 	},
 	gotCds: function(){
 		var me = this;
@@ -41,13 +45,15 @@ nyc.sr.App.prototype = {
 			clearInterval(this.getCdsInterval);
 			data.sort(function(a, b){
 				var aCd = a.get('BoroCD'), bCd = b.get('BoroCD');
-				a.set('cd', me.getCdName(aCd));
-				b.set('cd', me.getCdName(bCd));
+				a.set('cdDisplay', me.getCdDisplay(aCd));
+				b.set('cdDisplay', me.getCdDisplay(bCd));
+				a.set('community_board', me.getCdValue(aCd));
+				b.set('community_board', me.getCdValue(bCd));
 				if (aCd < bCd) return -1;
 				if (aCd > bCd) return 1;
 				return 0;
 			});
-			this.checkboxes(parent, data, 'cd');
+			this.checkboxes(parent, data, 'cdDisplay', 'community_board');
 		}
 	},
 	getComplaintTypes: function(){
@@ -56,15 +62,19 @@ nyc.sr.App.prototype = {
 			this.ajax(this.complaints, $.proxy(this.gotComplaintTypes, this));
 		}
 	},
-	checkboxes: function(parent, data, field, limit){
+	checkboxes: function(parent, data, displayField, valueField, limit){
 		var chg = $.proxy(this.buildQuery, this), fieldset = $('<fieldset data-role="controlgroup"></fieldset>');
 		$.each(data, function(i, row){
-			var val = row[field] || row.get(field);
-			var id = field + i;
+			var name = row[displayField] || row.get(displayField);
+			var val = row[valueField] || row.get(valueField);
+			var id = valueField + i;
 			var lbl = $('<label></label>');
-			var chk = $('<input type="checkbox" checked>');
-			lbl.attr('for', id).html(val);
-			chk.attr('id', id).data(field, val).change(chg);
+			var chk = $('<input type="checkbox">');
+			lbl.attr('for', id).html(name);
+			chk.attr('id', id)
+				.data('soda-field', valueField)
+				.data('soda-value', val)
+				.change(chg);
 			fieldset.append(lbl).append(chk);
 			if (limit) return i < limit - 1;
 		});
@@ -74,9 +84,32 @@ nyc.sr.App.prototype = {
 	gotComplaintTypes: function(response){
 		var parent = $('#complaint-types .ui-collapsible-content');
 		var data = $.csv.toObjects(response);
-		this.checkboxes(parent, data, 'complaint_type', 10);
+		this.checkboxes(parent, data, 'complaint_type', 'complaint_type', 10);
 	},
 	buildQuery: function(){
+		var where = this.getDateWhere();
+		where = this.appendInClause(where, '#community-districts input');
+		where = this.appendInClause(where, '#complaint-types input');
+		this.srs.$where = where;
+		this.srs.$order = '';
+		
+		console.warn(this.srs);
+		
+		this.getCount();
+		this.getComplaintTypes();
+	},
+	appendInClause: function(where, selector){
+		var all = $(selector), checked = $(selector + ':checked');
+		if (checked.length && all.length > checked.length){
+			where += ' AND ' + all.data('soda-field') + ' IN (';
+			$.each(checked, function(){
+				where += ("'" + $(this).data('soda-value') + "',");
+			});
+			where = where.substr(0, where.length - 1) + ')';
+		}
+		return where;
+	},
+	getDateWhere: function(){
 		var createdDateMin = $('#created-date-min').val();
 		var createdDateMax = $('#created-date-max').val();
 		if (!createdDateMin){
@@ -88,10 +121,7 @@ nyc.sr.App.prototype = {
 			where += ' AND ';
 			where += ("created_date<=" + "'" + createdDateMax + "'");
 		}
-		this.srs.$where = where;
-		this.srs.$order = '';
-		this.getCount();
-		this.getComplaintTypes();
+		return where;
 	},
 	getCount: function(){
 		this.count.$where = this.srs.$where;
@@ -115,14 +145,17 @@ nyc.sr.App.prototype = {
 		});
 	},
 	gotCount: function(response){
+		var me = this;
+		if (me.countInterval) clearInterval(me.countInterval);
 		var start = $('#record-count span').html().replace(/,/, '') * 1;
 		var end = $.csv.toObjects(response)[0].sr_count * 1;
 		var count = start;
 		var step = (end - start) / 1000;
-		var countInterval = setInterval(function(){
+		this.countInterval = setInterval(function(){
 			count = Math[step > 0 ? 'ceil' : 'floor'](count + step);
 			if ((step > 0 && count >= end) || (step < 0 && count <= end)){
-				clearInterval(countInterval);
+				clearInterval(me.countInterval);
+				delete this.countInterval;
 				count = end;
 			}
 			nyc.util.formatNumberHtml({
