@@ -21,11 +21,6 @@
 	<script src="https://maps.nyc.gov/nyc-lib/v0.3.2-SNAPSHOT/js/nyc-ol-lib.js"></script>
 </head>
 <body>
-	<h1>
-		<img src="img/nyc.svg" alt="maps.nyc.gov" onclick='document.location.reload();'>
-		311
-	</h1>
-	<h2 id="record-count"><span>0</span><br>Service Requests</h2>
 	<div id="map"></div>
 	<div id="panel">
 		<div id="map-type"></div>
@@ -41,12 +36,21 @@
 				</div>
 			</div>
 		</div>
+		<div id="community-districts"></div>
+		<div id="complaint-types"></div>
 	</div>
-	<script src="js/style.js"></script>
-	<script src="js/counter.js"></script>
-	<script src="js/soda.js"></script>
-	<script src="js/cd.js"></script>
-	<script src="js/app.js"></script>
-	<script src="js/init.js"></script>
+	
+	<script type="text/javascript">
+		var mapRadio = new nyc.Check({
+			target: '#map-type',
+			title: 'Map Type',
+			expanded: true,
+			choices: [
+				{name: 'polygon', value: 'polygon', label: 'Community Districts', checked: true},
+				{name: 'point', value: 'point', label: 'Service Request Locations'}
+		    ]
+		});
+	</script>
+
 </body>
 </html>

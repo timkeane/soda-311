@@ -1,240 +1,140 @@
-nyc.sr = {};
+nyc.sr = nyc.sr || {};
 
-nyc.sr.App = function(map, cdSrc, mapType, sodaUrl){
-	this.map = map;
-	this.cdSrc = cdSrc;
-	this.sodaUrl = sodaUrl;
+nyc.sr.App = function(options){
+	this.map = options.map;
+	this.view = this.map.getView();
+	this.cdChoices = [];
+	this.cdTip = options.cdDecorations.cdTip; 
+	options.cdDecorations.choices = this.cdChoices;
+	this.cdSrc = this.getCds(options);
+	this.style = options.style;
+	this.mapRadio = options.mapRadio;
+	this.dateInput = options.dateInput;
+	this.cdSoda = options.cdSoda;
+	this.srSoda = options.srSoda;
+	this.counter = options.counter;
+	
 	this.defaultDates();
-	this.createPolygonStyles();
-	this.getCdsInterval = setInterval($.proxy(this.gotCds, this), 500);
-	this.buildQuery();
-	this.cdLyr = new ol.layer.Vector({source: cdSrc, opacity: 0});
+
 	this.srLyr = new ol.layer.Vector({opacity: 0});
-	map.addLayer(this.cdLyr);
-	map.addLayer(this.srLyr);
-	new nyc.ol.FeatureTip(map, [{layer: this.cdLyr, labelFunction: this.cdTip}])
-	$('#created-date-min, #created-date-max').change($.proxy(this.buildQuery, this));
-	mapType.on('change', $.proxy(this.changeMapType, this));
+	this.map.addLayer(this.srLyr);
+	
+	this.mapRadio.on('change', $.proxy(this.changeMapType, this));
+	
 };
 
 nyc.sr.App.prototype = {
-	BOROCODES: {MANHATTAN: 1, BRONX: 2, BROOKLYN: 3, QUEENS: 4, STATEN: 5},
-	BOROS: ['Manhattan', 'Bronx', 'Brooklyn', 'Queens', 'Staten Island'],
-	COLORS: ['rgb(254,237,222)', 'rgb(253,190,133)', 'rgb(253,141,60)', 'rgb(230,85,13)', 'rgb(166,54,3)'],
-	STYLES: {nullStyle: new ol.style.Style({})},
-	url: null,
-	count: {
-		$select: 'count(unique_key) AS sr_count'
-	},
-	complaints: {	
-		$select: 'count(unique_key) AS sr_count, complaint_type',
-		$group: 'complaint_type',
-		$order: 'sr_count DESC'
-	},
-	srsByLocation: {
-		$select: 'count(unique_key) AS sr_count, x_coordinate_state_plane AS x, y_coordinate_state_plane AS y',
-		$group: 'x, y'
-	},
-	srsByCd: {
-		$select: 'count(unique_key) AS sr_count, community_board',
-		$group: 'community_board'		
-	},
+	map: null,
+	view: null,
+	cdChoices: null,
+	cdTip: null,
+	cdSrc: null,
+	cdLyr: null,
+	srLyr: null,
+	style: null,
+	mapRadio: null,
+	dateInput: null,
+	cdCheck: null,
+	srTypeCheck: null,
+	whereNotMappable: null,
+	mapType: 'cd',
 	changeMapType: function(type){
-		this.showSrLocations = type[0].name == 'point';
+		this.mapType = type[0].name;
 		this.buildQuery();
-	},
-	cdTip: function(){
-		var cd = '<b>' + this.get('cdDisplay') + '</b>';
-		var count = this.get('sr_count');
-		if (!isNaN(count)) cd += ('<br>' + count + ' Service Requests');
-		return {text: cd};
-	},
-	createPolygonStyles: function(){
-		var polygonStyles = [];
-		$.each(this.COLORS, function(_, color){
-			polygonStyles.push(
-				new ol.style.Style({
-					fill: new ol.style.Fill({
-						color: color
-					}),
-					stroke: new ol.style.Stroke({
-						color: 'transparent',
-						width: 3
-					})
-				})
-			);
-		});
-		this.STYLES.polygon = polygonStyles;
 	},
 	defaultDates: function(){
 		var today = new Date(), lastWeek = new Date();
 		lastWeek.setDate(lastWeek.getDate() - 7);
-		$('#created-date-min').val(lastWeek.toISOString().split('T')[0]);
-		$('#created-date-max').val(today.toISOString().split('T')[0]);
+		this.minDate = this.dateInput.container.find('#created-date-min');
+		this.maxDate = this.dateInput.container.find('#created-date-max');
+		this.dateInput.container.find('input').change($.proxy(this.buildQuery, this));
+		this.minDate.val(lastWeek.toShortISOString());
+		this.maxDate.val(today.toShortISOString()).trigger('change');
 	},
-	getCdDisplay: function(cdNum){
-		var cd = cdNum + '';
-		return this.BOROS[cd.substr(0, 1) - 1] + ' ' + (1 * cd.substr(1));
-	},
-	getCdValue: function(cdNum){
-		var cd = cdNum + '';
-		return cd.substr(1) + ' ' + this.BOROS[cd.substr(0, 1) - 1].toUpperCase();
+	getCds: function(options){		
+		var cdSrc = new nyc.ol.source.Decorating(
+			{url: options.cdUrl, format: new ol.format.GeoJSON()},
+			[options.cdDecorations],
+			{nativeProjection: 'EPSG:4326', projection: 'EPSG:3857'}
+		);
+		cdSrc.on(nyc.ol.source.Decorating.LoaderEventType.FEATURESLOADED, $.proxy(this.gotCds, this));
+		return cdSrc;
 	},
 	gotCds: function(){
-		var me = this;
-		if (me.cdSrc.getFeatures().length){
-			var parent = $('#community-districts .ui-collapsible-content');
-			var data = this.cdSrc.getFeatures();
-			clearInterval(this.getCdsInterval);
-			data.sort(function(a, b){
-				var aCd = a.get('BoroCD'), bCd = b.get('BoroCD');
-				a.set('cdDisplay', me.getCdDisplay(aCd));
-				b.set('cdDisplay', me.getCdDisplay(bCd));
-				a.set('community_board', me.getCdValue(aCd));
-				b.set('community_board', me.getCdValue(bCd));
-				a.setId(aCd);
-				b.setId(bCd);
-				if (aCd < bCd) return -1;
-				if (aCd > bCd) return 1;
-				return 0;
-			});
-			this.cdsSorted = true;
-			this.checkboxes(parent, data, 'cdDisplay', 'community_board');
-		}
-	},
-	getComplaintTypes: function(){
-		if (!$('#complaint-types input').length){
-			this.complaints.$where = this.srsByLocation.$where;
-			this.ajax(this.complaints, $.proxy(this.gotComplaintTypes, this));
-		}
-	},
-	checkboxes: function(parent, data, displayField, valueField, limit){
-		var chg = $.proxy(this.buildQuery, this), fieldset = $('<fieldset data-role="controlgroup"></fieldset>');
-		$.each(data, function(i, row){
-			var name = row[displayField] || row.get(displayField);
-			var val = row[valueField] || row.get(valueField);
-			var id = valueField + i;
-			var lbl = $('<label></label>');
-			var chk = $('<input type="checkbox">');
-			lbl.attr('for', id).html(name);
-			chk.attr('id', id)
-				.data('soda-field', valueField)
-				.data('soda-value', val)
-				.change(chg);
-			fieldset.append(lbl).append(chk);
-			if (limit) return i < limit - 1;
+		this.cdLyr = new ol.layer.Vector({
+			source: this.cdSrc, 
+			style: $.proxy(this.style.cdStyle),
+			visible: false
 		});
-		$(parent).html(fieldset);
-		$(parent).find('fieldset').controlgroup({});
+		new nyc.ol.FeatureTip(this.map, [{layer: this.cdLyr, labelFunction: this.cdTip}]);
+		this.map.addLayer(this.cdLyr);
+		this.creatCdCheck();
 	},
-	gotComplaintTypes: function(response){
-		var parent = $('#complaint-types .ui-collapsible-content');
-		var data = $.csv.toObjects(response);
-		this.checkboxes(parent, data, 'complaint_type', 'complaint_type', 10);
+	creatCdCheck: function(){
+		var div = $('<div id="community-districts"></div>');		
+		this.cdChoices.sort(function(a, b){
+			var aCd = a.sort, bCd = b.sort;
+			if (aCd < bCd) return -1;
+			if (aCd > bCd) return 1;
+			return 0;
+		});
+		this.cdCheck = new nyc.Check({
+			target: div, 
+			title: 'Community District',
+			choices: this.cdChoices
+		});
+		this.dateInput.container.after(div);
+		div.trigger('create');
+		this.cdCheck.on('change', $.proxy(this.buildQuery, this));		
+	},
+	gotSrTypes: function(csv){
+		var div = $('<div id="complaint-types"></div>');		
+		var types = [];
+		$.each($.csv.toObjects(csv), function(i, typ){
+			types.push({
+				name: 'complaint_type',
+				label: typ.complaint_type,
+				value: typ.complaint_type
+			});
+			return i < 9;
+		});
+		this.srTypeCheck = new nyc.Check({
+			target: div, 
+			title: 'Complaint Type',
+			choices: types
+		});
+		if (this.cdCheck){
+			this.cdCheck.container.after(div);		
+		}else{
+			$('#panel').append(div);		
+		}
+		div.trigger('create');
+		this.srTypeCheck.on('change', $.proxy(this.buildQuery, this));
 	},
 	buildQuery: function(){
-		var where = this.getDateWhere();
-		where = this.appendInClause(where, '#community-districts input');
-		where = this.appendInClause(where, '#complaint-types input');
-		this.srsByLocation.$where = where;
-		this.getCount();
-		this.getComplaintTypes();
-		this.getSrs();
+		var where = this.and(this.whereNotMappable, this.dateClause());
+		//where = this.and(where, this.cdClause());
+
+
 	},
-	getBreaks: function(counts){
-		var min  = Number.MAX_VALUE, max = -1;
-		$.each(counts, function(){
-			var c = this.sr_count * 1;
-			if (c < min) min = c;
-			if (c > max) max = c;
-		});
-		var delta = max - min;
-		var fifth = Math.round(delta / 5);
-		var breaks = [[min, min + fifth]];
-		for (var i = 1; i < 4; i++){
-			breaks.push([breaks[i - 1][1], breaks[i - 1][1] + fifth]);
-		}
-		breaks.push([max - fifth, max]);
-		return breaks;
+	dateClause: function(){
+		var where = "created_date >= '" + this.minDate.val() + "'";
+		where = this.and(where, "created_date >= '" + this.maxDate.val() + "'");
+		return where;
 	},
-	getSrs: function(){
-		if (this.showSrLocations){
-			this.getSrsByLocation();
-		}else{
-			this.getSrsByCd();
-		}
-	},
-	getSrsByCd: function(){
-		this.fade(this.cdLyr, .4, 0);
-		this.srsByCd.$where = this.srsByLocation.$where;
-		this.ajax(this.srsByCd, $.proxy(this.gotSrsByCd, this));
-	},
-	gotSrsByCd: function(response){
-		var me = this;
-		if (me.cdsSorted){
-			var srsByCd = $.csv.toObjects(response)
-			var breaks = me.getBreaks(srsByCd);
-			$.each(me.cdSrc.getFeatures(), function(){
-				this.set('sr_count', 0);
-				this.setStyle(me.STYLES.nullStyle);
+	cdClause: function(){
+		var cds = this.cdCheck.val();
+		if (cds.length){
+			var where = 'community_board IN (';
+			$.each(cds, function(){
+				where += "'" + this.value + "',"
 			});
-			$.each(srsByCd, function(){
-				var sodaCd = this.community_board.split(' ');
-				var count = this.sr_count;
-				var fid = me.BOROCODES[sodaCd[1]] + sodaCd[0];
-				var cd = me.cdSrc.getFeatureById(fid);
-				cd.set('sr_count', count);
-				cd.setStyle(me.getStyle(count, breaks, 'polygon'));
-			});
-			this.fade(this.cdLyr, 0, .4);
-		}else{
-			setTimeout(function(){
-				me.gotSrsByCd(response);
-			}, 200);
+			return where.substr(0, where.length - 1) + ')';			
 		}
 	},
-	fade: function(layer, start, end){
-		if (layer && layer.getOpacity() != end){
-			var step = (end - start) / 5;
-			var fadeInterval = setInterval(function(){
-				layer.setOpacity(layer.getOpacity() + step);
-				if (layer.getOpacity() >= end){
-					clearInterval(fadeInterval);
-				}
-			}, 100);
-		}
-	},
-	getStyle: function(count, breaks, type){
-		var styleIdx;
-		$.each(breaks, function(i, b){
-			if (count >= b[0] && count <= b[1]){
-				styleIdx = i;
-				return false;
-			}
-		});
-		return this.STYLES[type][styleIdx];
-	},
-	getSrsByLocation: function(){
-		var me = this;
-		var srSrc = new ol.source.Vector({loader: new nyc.ol.source.CsvPointFeatureLoader({
-			url: this.sodaUrl + '?' + $.param(this.srsByLocation),
-			projection: 'EPSG:2263',
-			xCol: 'x',
-			yCol: 'y'
-		})});
-		srSrc.once('addfeature', function(){
-			me.fade(me.srLyr, 0, 1);
-		});
-		me.srLyr.setSource(srSrc);
-	},
-	appendInClause: function(where, selector){
-		var all = $(selector), checked = $(selector + ':checked');
-		if (checked.length && all.length > checked.length){
-			where += ' AND ' + all.data('soda-field') + ' IN (';
-			$.each(checked, function(){
-				where += ("'" + $(this).data('soda-value') + "',");
-			});
-			where = where.substr(0, where.length - 1) + ')';
+	and: function(where, more){
+		if (more){
+			return where + ' AND ' + more;
 		}
 		return where;
 	},
@@ -251,47 +151,5 @@ nyc.sr.App.prototype = {
 			where += ("created_date<=" + "'" + createdDateMax + "'");
 		}
 		return where;
-	},
-	getCount: function(){
-		this.count.$where = this.srsByLocation.$where;
-		this.ajax(this.count, $.proxy(this.gotCount, this));
-	},
-	excludeNotMappable: function(query){
-		query.$where = query.$where || '';
-		if (query.$where){
-			query.$where += ' AND ';
-		}
-		query.$where += 'x_coordinate_state_plane IS NOT NULL AND y_coordinate_state_plane IS NOT NULL';
-		query.$where += " AND community_board NOT IN ('QNA','Unspecified MANHATTAN','Unspecified BRONX','Unspecified BROOKLYN','Unspecified QUEENS','Unspecified STATEN ISLAND')";
-		query.$limit = 50000;
-		return query;
-	},
-	ajax: function(query, callback){
-		$.ajax({
-			url: this.sodaUrl,
-			method: 'GET',
-			data: this.excludeNotMappable(query),
-			success: callback
-		});
-	},
-	gotCount: function(response){
-		var me = this;
-		if (me.countInterval) clearInterval(me.countInterval);
-		var start = $('#record-count span').html().replace(/,/, '') * 1;
-		var end = $.csv.toObjects(response)[0].sr_count * 1;
-		var count = start;
-		var step = (end - start) / 1000;
-		this.countInterval = setInterval(function(){
-			count = Math[step > 0 ? 'ceil' : 'floor'](count + step);
-			if ((step > 0 && count >= end) || (step < 0 && count <= end)){
-				clearInterval(me.countInterval);
-				delete this.countInterval;
-				count = end;
-			}
-			nyc.util.formatNumberHtml({
-				elements: $('#record-count span').html(count)
-			});
-		}, 1);
 	}
 };
-

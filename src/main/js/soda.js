@@ -1,9 +1,10 @@
 nyc.soda = {};
 
-nyc.soda.Query = function(url, options){
+nyc.soda.Query = function(options){
+	options = options || {};
 	this.query = {};
 	this.setUrl(options.url);
-	this.setQuery(options.query);
+	this.setQuery(options);
 };
 
 nyc.soda.Query.prototype = {
@@ -19,14 +20,34 @@ nyc.soda.Query.prototype = {
 		this.query.$order = options.order || this.query.$order;
 	},
 	execute: function(options){
-		this.setUrl(options.url);
-		this.setQuery(options.query);
+		var me = this, csv;
+		options = options || {};
+		me.setUrl(options.url);
+		csv = me.csv();
+		me.setQuery(options);
 		$.ajax({
-			url: this.url,
+			url: me.url,
 			method: 'GET',
-			data: $.param(this.query),
-			success: options.callback
+			data: $.param(me.query),
+			success: function(data){
+				me.callback(data, csv, options.callback);
+			}
 		});
+	},
+	callback: function(data, csv, callback){
+		var data = this.isCsv ? $.csv.toObjects(data) : data; 
+		if (callback) {
+			callback(data);
+		}
+	},
+	csv: function(){
+		var idxCsv = this.url.indexOf('.csv');
+		var idxQstr = this.url.indexOf('?');
+		var len = this.url.length;
+		var csvPos = len - idxCsv;
+		var qstrPos = len - idxQstr;
+		return idxCsv > -1 && (csvPos == 4 || (qstrPos == csvPos - 4));
+		
 	}
 };
 
