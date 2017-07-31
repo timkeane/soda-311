@@ -15,7 +15,7 @@ h1, #map {
 	background-color: #000;
 	color: #fff;
 	margin: 0;
-	padding: 8px 0 0 83px;
+	padding: 8px 0 0 80px;
 	z-index: 1;
 }
 
@@ -58,6 +58,8 @@ h1 img {
 	position: fixed;
 	right: 5px;
 	z-index: 1000;
+	text-align: right;
+	margin: 0;
 }
 #record-count, #record-count span {
 	color: #fff;
