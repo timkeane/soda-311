@@ -248,7 +248,7 @@ nyc.sr.App.prototype = {
 				$(me.mapRadio.inputs[0]).trigger('click').checkboxradio('refresh');
 			}else{
 				me.style.buckets = buckets.buckets;
-				me.legend.html(me.srLeg.html('Service Requests by<br>Location', buckets.breaks));
+				me.legend.html(me.srLeg.html('Service Requests by Location', buckets.breaks));
 				me.cdLyr.setVisible(false);
 				me.srLyr.setVisible(true);				
 			}

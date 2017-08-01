@@ -5,10 +5,14 @@ nyc.sr.ListDetail = function(options){
 	this.container = collapsible.container;
 	this.container.find('.ui-collapsible-content').append(nyc.sr.ListDetail.LIST_DETAIL_HTML).trigger('create');
 	
-	$('#list-detail .list-detail').collapsibleset('option', {
-		collapsedIcon: 'carat-d', 
-		expandedIcon: 'carat-u'
-	}).addClass('ctl-collapse');
+	this.listDetailContainer = this.container.find('.list-detail');
+
+	this.listDetailContainer.collapsibleset('option', {
+			collapsedIcon: 'carat-d', 
+			expandedIcon: 'carat-u'
+		})
+		.addClass('ctl-collapse')
+		.hide();
 
 	this.listContainer = this.container.find('.list');
 	this.detailContainer = this.container.find('.detail'); 
@@ -22,6 +26,7 @@ nyc.sr.ListDetail = function(options){
 
 nyc.sr.ListDetail.prototype = {
 	container: null,
+	listDetailContainer: null,
 	listContainer: null,
 	detailContainer: null,
 	list: null,
@@ -53,12 +58,14 @@ nyc.sr.ListDetail.prototype = {
 		this.detailContainer.collapsible('expand');
 	},
 	srList: function(data){
+		this.listDetailContainer.show();
 		this.container.find('.list').hide();
 		this.container.collapsible('expand');
 		this.srListDetail(data, null, 'Service Requests');
 	},
 	cdList: function(data, where){
 		var me = this, table = $(nyc.sr.ListDetail.CD_LIST_HTML), tbody = table.find('tbody');
+		me.listDetailContainer.show();
 		me.cdSrTypeDrilldown.setQuery({where: where});
 		me.listTitle.html(me.cdListHeading(data[0]));
 		$.each(data, function(){
