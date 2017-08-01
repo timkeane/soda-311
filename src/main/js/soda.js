@@ -18,6 +18,7 @@ nyc.soda.Query.prototype = {
 		this.query.$where = options.where || this.query.$where;
 		this.query.$group = options.group || this.query.$group;
 		this.query.$order = options.order || this.query.$order;
+		this.query.$limit = options.limit || this.query.$limit;
 	},
 	execute: function(options){
 		var me = this, csv;
@@ -34,8 +35,11 @@ nyc.soda.Query.prototype = {
 			}
 		});
 	},
+	getUrlAndQuery: function(){
+		return this.url + '?' + $.param(this.query);
+	},
 	callback: function(data, csv, callback){
-		var data = this.isCsv ? $.csv.toObjects(data) : data; 
+		var data = this.csv() ? $.csv.toObjects(data) : data; 
 		if (callback) {
 			callback(data);
 		}

@@ -7,8 +7,8 @@ nyc.sr.Style = function(){
 };
 
 nyc.sr.Style.prototype = {
-	COLORS: ['rgb(254,237,222)', 'rgb(253,190,133)', 'rgb(253,141,60)', 'rgb(230,85,13)', 'rgb(166,54,3)'],
-	SIZES: [16, 8, 4, 2, 1],
+	COLORS: ['rgba(254,237,222,.4)', 'rgba(253,190,133,.4)', 'rgba(253,141,60,.4)', 'rgba(230,85,13,.4)', 'rgba(166,54,3,.4)'],
+	SIZES: [2, 4, 6, 8, 10],
 	nullStyle: new ol.style.Style({}),
 	buckets: null,
 	cdStyles: null,
@@ -20,34 +20,37 @@ nyc.sr.Style.prototype = {
 		return this.getStyle(this.cdStyles, feature.get('sr_count'));
 	},
 	getStyle: function(styles, count){
-		var styleIdx;
-		$.each(this.buckets, function(i, b){
-			if (count >= b[0] && count <= b[1]){
-				styleIdx = i;
-				return false;
-			}
-		});
-		return styles[styleIdx];
+		if (count){
+			var styleIdx;
+			$.each(this.buckets, function(i, b){
+				if (count >= b[0] && count <= b[1]){
+					styleIdx = i;
+					return false;
+				}
+			});
+			return styles[styleIdx];
+		}
+		return this.nullStyle;
 	},
 	setSrStyles: function(){
 		var me = this, srStyles = [];
 		$.each(me.COLORS, function(i, color){
 			srStyles.push(
 				new ol.style.Style({
-					icon: new ol.style.Circle({
+					image: new ol.style.Circle({
+						radius: me.SIZES[i],
 						fill: new ol.style.Fill({
 							color: color
+						}),
+						stroke: new ol.style.Stroke({
+							color: 'rgba(166,54,3,' + (((i + 1) / 5) * ((i + 1) / 5)) + ')',
+							width: 1
 						})
-					}),
-					radius: me.SIZES[i],
-					stroke: new ol.style.Stroke({
-						color: '#000',
-						width: 2
 					})
 				})
 			);
 		});
-		this.srStyles = srStyles;		
+		me.srStyles = srStyles;		
 	},
 	setCdStyles: function(){
 		var cdStyles = [];
@@ -58,7 +61,7 @@ nyc.sr.Style.prototype = {
 						color: color
 					}),
 					stroke: new ol.style.Stroke({
-						color: '#fff',
+						color: 'rgba(255,255,255,0.2)',
 						width: 3
 					})
 				})

@@ -18,7 +18,6 @@ h1, #map {
 	padding: 8px 0 0 80px;
 	z-index: 1;
 }
-
 h1 img {
 	position: fixed;
 	top: 3px;
@@ -37,9 +36,6 @@ h1 img {
 #map {
 	width: calc(100% - 320px);
 }
-
-/* ========================== begin panel ======================== */
-
 #panel {
     position: fixed;
 	width: 310px;
@@ -64,10 +60,20 @@ h1 img {
 #record-count, #record-count span {
 	color: #fff;
 }
-
-/* =========================== end panel ========================= */
-
-#date-ranges div.fields {
+#soda-url textarea {
+    font-family: courier;
+}
+#soda-url .tip {
+	display: none;
+	position: absolute;
+	font-weight: bold;
+	color: #fff;
+	background-color: #000;
+	border-radius: 3px;
+	margin: 10px 5px;
+	padding: 5px;
+}
+#date-ranges div.fields, #soda-url textarea {
 	border: 1px solid rgb(221,221,221);
 	border-radius: 3px;
 	background-color: #f6f6f6;
@@ -86,4 +92,74 @@ h1 img {
 #date-ranges label {
 	width: 20%;
 	font-weight: bold;
+}
+
+div.legend {
+	min-height: 175px;
+}
+div.legend caption {
+	font-weight: bold;
+}
+.cd-leg .leg-bin img {
+	border: 3px solid rgba(255,255,255,0.2);
+}
+.cd-leg .leg-bin-0 img {
+	background-color: rgba(254,237,222,.4);
+}
+.cd-leg .leg-bin-1 img {
+	background-color: rgba(253,190,133,.4);
+}
+.cd-leg .leg-bin-2 img {
+	background-color: rgba(253,141,60,.4);
+}
+.cd-leg .leg-bin-3 img {
+	background-color: rgba(230,85,13,.4);
+}
+.cd-leg .leg-bin-4 img {
+	background-color: rgba(166,54,3,.4);
+}
+table.leg-point.sr-leg td.leg-bin img {
+	border-radius: 50%;
+}
+table.leg-point.sr-leg td.leg-bin-0 img {
+	width: 4px;
+	height: 4px;
+	border: 1px solid rgba(166,54,3,.04);
+	background-color: rgba(254,237,222,.4);
+}
+table.leg-point.sr-leg td.leg-bin-1 img {
+	width: 8px;
+	height: 8px;
+	border: 1px solid rgba(166,54,3,.16);
+	background-color: rgba(253,190,133,.4);
+}
+table.leg-point.sr-leg td.leg-bin-2 img {
+	width: 12px;
+	height: 12px;
+	border: 1px solid rgba(166,54,3,.36);
+	background-color: rgba(253,141,60,.4);
+}
+table.leg-point.sr-leg td.leg-bin-3 img {
+	width: 16px;
+	height: 16px;
+	border: 1px solid rgba(166,54,3,.64);
+	background-color: rgba(230,85,13,.4);
+}
+table.leg-point.sr-leg td.leg-bin-4 img {
+	width: 20px;
+	height: 20px;
+	border: 1px solid rgba(166,54,3,1);
+	background-color: rgba(166,54,3,.4);
+}
+#loading {
+	display: none;
+	position: fixed;
+	z-index: 2000;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	opacity: .2;
+    cursor: wait;
+	background-image: url(../img/loading.svg);
 }

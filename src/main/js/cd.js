@@ -14,12 +14,6 @@ nyc.cd = {
 		getValue: function(){
 			var cd = this.get('BoroCD') + '';
 			return cd.substr(1) + ' ' + this.BOROS[cd.substr(0, 1) - 1].toUpperCase();
-		},
-		cdTip: function(){
-			var cd = '<b>' + this.getLabel() + '</b>';
-			var count = this.get('sr_count');
-			if (!isNaN(count)) cd += ('<br>' + count + ' Service Requests');
-			return {text: cd};
 		}
 	}		
 };

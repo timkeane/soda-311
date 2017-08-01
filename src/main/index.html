@@ -29,6 +29,7 @@
 	<div id="map"></div>
 	<div id="panel">
 		<div id="map-type"></div>
+		<div id="legend"><div class="legend"></div></div>
 		<div id="date-ranges">
 			<div class="fields">
 				<div class="field">
@@ -41,9 +42,14 @@
 				</div>
 			</div>
 		</div>
+		<div id="soda-url">
+			<textarea onfocus='nyc.sr.app.copyUrl(event);'></textarea>
+			<div class="tip">Copied to Clipboard</div>
+		</div>
 	</div>
+	<div id="loading"></div>
 	<script src="js/style.js"></script>
-	<script src="js/counter.js"></script>
+	<script src="js/buckets.js"></script>
 	<script src="js/soda.js"></script>
 	<script src="js/cd.js"></script>
 	<script src="js/app.js"></script>
