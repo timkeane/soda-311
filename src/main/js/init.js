@@ -36,17 +36,23 @@ var srSoda = new nyc.soda.Query({
 	limit: 50000
 });
 
-var cdInfoSoda = new nyc.soda.Query({
+var cdListSoda = new nyc.soda.Query({
 	url: OPEN_DATA_URL,
-	select: 'count(unique_key) AS sr_count, complaint_type',
-	group: 'complaint_type',
-	order: 'sr_count'
+	select: 'count(unique_key) AS sr_count, community_board, complaint_type',
+	group: 'community_board, complaint_type',
+	order: 'sr_count DESC'
 });
 
-var srInfoSoda = new nyc.soda.Query({
+var cdSrTypeDrilldown = new nyc.soda.Query({
 	url: OPEN_DATA_URL,
-	select: 'agency_name, complaint_type, descriptor, created_date, closed_date, resolution_description, incident_address, intersection_street_1, intersection_street_2, city, incident_zip',
-	order: 'complaint_type'
+	select: 'unique_key, agency_name, complaint_type, descriptor, created_date, closed_date, resolution_description, location_type, incident_address, street_name, cross_Street_1, cross_Street_2, intersection_street_1, intersection_street_2, city, incident_zip',
+	order: 'created_date DESC'
+});
+
+var srListSoda = new nyc.soda.Query({
+	url: OPEN_DATA_URL,
+	select: 'unique_key, agency_name, complaint_type, descriptor, created_date, closed_date, resolution_description, location_type, incident_address, street_name, cross_Street_1, cross_Street_2, intersection_street_1, intersection_street_2, city, incident_zip',
+	order: 'complaint_type, created_date DESC'
 });
 
 var map = new nyc.ol.Basemap({target: $('#map').get(0)});
@@ -71,9 +77,13 @@ nyc.sr.app = new nyc.sr.App({
 	whereNotMappable: WHERE_NOT_MAPPABLE,
 	cdSoda: cdSoda,
 	srSoda: srSoda,
-	cdInfoSoda: cdInfoSoda,
-	srInfoSoda: srInfoSoda,
-	buckets: new nyc.sr.Buckets('#record-count span')
+	cdListSoda: cdListSoda,
+	srListSoda: srListSoda,
+	buckets: new nyc.sr.Buckets('#record-count span'),
+	listDetail: new nyc.sr.ListDetail({
+		target: '#list-detail',
+		cdSrTypeDrilldown: cdSrTypeDrilldown
+	})
 });	
 
 var lastYear = new Date();

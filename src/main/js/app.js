@@ -14,9 +14,10 @@ nyc.sr.App = function(options){
 	this.sodaTextarea = options.sodaTextarea;
 	this.cdSoda = options.cdSoda;
 	this.srSoda = options.srSoda;
-	this.cdInfoSoda = options.cdInfoSoda;
-	this.srInfoSoda = options.srInfoSoda;
+	this.cdListSoda = options.cdListSoda;
+	this.srListSoda = options.srListSoda;
 	this.buckets = options.buckets;
+	this.listDetail = options.listDetail;
 	
 	this.defaultDates();
 
@@ -25,7 +26,8 @@ nyc.sr.App = function(options){
 	new nyc.ol.FeatureTip(this.map, [{layer: this.srLyr, labelFunction: this.tip}]);
 	
 	this.mapRadio.on('change', $.proxy(this.changeMapType, this));
-
+	this.sodaTextarea.container.find('textarea').click($.proxy(this.copyUrl, this));
+	
 	this.map.on('click', $.proxy(this.mapClick, this));
 	
 	this.initLegends();
@@ -42,11 +44,19 @@ nyc.sr.App.prototype = {
 	cdLeg: null,
 	srLeg: null,
 	style: null,
+	legend: null,
 	mapRadio: null,
 	dateInput: null,
 	cdCheck: null,
 	srTypeCheck: null,
 	whereNotMappable: null,
+	sodaTextarea: null,
+	cdSoda: null,
+	srSoda: null,
+	cdListSoda: null,
+	srListSoda: null,
+	buckets: null,
+	listDetail: null,
 	mapType: 'cd',
 	initLegends: function(){
 		this.cdLeg = new nyc.BinLegend(
@@ -139,9 +149,9 @@ nyc.sr.App.prototype = {
 		this.srTypeCheck.on('change', $.proxy(this.sodaMapQuery, this));
 	},
 	buildWhereClause: function(){
-		var where = this.and(this.whereNotMappable, this.dateClause());
-		where = this.and(where, this.inClause('community_board', this.cdCheck));
-		where = this.and(where, this.inClause('complaint_type', this.srTypeCheck));
+		var where = nyc.soda.Query.and(this.whereNotMappable, this.dateClause());
+		where = nyc.soda.Query.and(where, this.inClause('community_board', this.cdCheck));
+		where = nyc.soda.Query.and(where, this.inClause('complaint_type', this.srTypeCheck));
 		return where;
 	},
 	sodaMapQuery: function(){
@@ -157,18 +167,26 @@ nyc.sr.App.prototype = {
 	},
 	sodaInfoQuery: function(feature, layer){
 		var where = this.buildWhereClause(), soda, callback;
-		if (layer === me.cdLyr){
-			var cd = feature.html('id');
-			where = this.and(where, "community_board = '" + cd + "'");
-			soda = this.cdInfoSoda;
+		if (layer === this.cdLyr){
+			var cd = feature.getId();
+			where = nyc.soda.Query.and(where, "community_board = '" + cd + "'");
+			soda = this.cdListSoda;
+			callback = $.proxy(this.cdList, this);
 		}else{
 			var x = feature.get('x_coordinate_state_plane');
 			var y = feature.get('y_coordinate_state_plane');
-			where = this.and(where, 'x_coordinate_state_plane = ' + x);
-			where = this.and(where, 'y_coordinate_state_plane = ' + y);
-			soda = this.srInfoSoda;
+			where = nyc.soda.Query.and(where, 'x_coordinate_state_plane = ' + x);
+			where = nyc.soda.Query.and(where, 'y_coordinate_state_plane = ' + y);
+			soda = this.srListSoda;
 		}
 		this.executeSoda(soda, where, callback);
+	},
+	cdList: function(data, soda){
+		this.listDetail.cdList(data, soda.query.where);
+		$('#loading').fadeOut();
+	},
+	srInfo: function(data){
+		
 	},
 	executeSoda: function(soda, where, callback){
 		$('#loading').fadeIn();
@@ -180,7 +198,7 @@ nyc.sr.App.prototype = {
 	},
 	dateClause: function(){
 		var where = "created_date >= '" + this.minDate.val() + "'";
-		where = this.and(where, "created_date <= '" + this.maxDate.val() + "'");
+		where = nyc.soda.Query.and(where, "created_date <= '" + this.maxDate.val() + "'");
 		return where;
 	},
 	inClause: function(sodaCol, checkboxes){
@@ -249,6 +267,5 @@ nyc.sr.App.prototype = {
 		tip.css({left: pos.left + 'px', top: pos.top + 'px'}).fadeIn(function(){
 			$(document).one('click', $.proxy(tip.fadeOut, tip));
 		});
-		console.warn(event);
 	}
 };

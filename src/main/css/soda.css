@@ -78,12 +78,17 @@ h1 img {
 }
 #soda-url .tip {
 	display: none;
-	position: absolute;
+	position: sticky;
+	float: left;
+	margin: 10px 0 -75px;
+	z-index: 2000;
+}
+#soda-url .tip div {
 	font-weight: bold;
 	color: #fff;
 	background-color: #000;
 	border-radius: 3px;
-	margin: 10px 5px;
+	margin: 2px;
 	padding: 5px;
 }
 #date-ranges div.fields, #soda-url textarea {
@@ -168,10 +173,49 @@ table.leg-point.sr-leg td.leg-bin-4 img {
 	position: fixed;
 	z-index: 2000;
 	left: 0;
-	top: 0;
+	top: 45px;
 	right: 0;
 	bottom: 0;
 	opacity: .2;
     cursor: wait;
 	background-image: url(../img/loading.svg);
+}
+#list-detail h3 {
+	text-transform: capitalize;
+}
+.cd-info {
+	border-collapse: collapse;
+}
+.cd-info thead tr {
+	background-color: #f6f6f6;
+}
+.cd-info th, .cd-info td {
+	border: 1px solid rgb(221,221,221);
+	padding: 3px;
+}
+.cd-info th {
+	border-top: none;
+}
+.cd-info tr td:first-of-type {
+	text-align: right;
+}
+.cd-info tr td:last-of-type {
+	cursor: pointer;
+}
+.cd-info a {
+	font-weight: normal;
+}
+.cd-info tr td:last-of-type:hover {
+	color: #fff;
+	background-color: #000;
+}
+.cd-info td:hover a {
+	color: #fff;
+}
+.list p, .dtail p {
+	margin: 0;
+}
+.list .ui-collapsible-content, .detail .ui-collapsible-content {
+	padding: 0;
+	border: none;
 }

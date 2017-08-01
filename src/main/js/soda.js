@@ -14,11 +14,11 @@ nyc.soda.Query.prototype = {
 		this.url = url || this.url;
 	},
 	setQuery: function(options){
-		this.query.$select = options.select || this.query.$select;
-		this.query.$where = options.where || this.query.$where;
-		this.query.$group = options.group || this.query.$group;
-		this.query.$order = options.order || this.query.$order;
-		this.query.$limit = options.limit || this.query.$limit;
+		this.query.select = options.select || this.query.select;
+		this.query.where = options.where || this.query.where;
+		this.query.group = options.group || this.query.group;
+		this.query.order = options.order || this.query.order;
+		this.query.limit = options.limit || this.query.limit;
 	},
 	execute: function(options){
 		var me = this, csv;
@@ -29,11 +29,18 @@ nyc.soda.Query.prototype = {
 		$.ajax({
 			url: me.url,
 			method: 'GET',
-			data: $.param(me.query),
+			data: me.qstr(),
 			success: function(data){
 				me.callback(data, csv, options.callback);
 			}
 		});
+	},
+	qstr: function(){
+		var qry = {};
+		for (var p in this.query){
+			qry['$' + p] = this.query[p];
+		}
+		return $.param(qry);
 	},
 	getUrlAndQuery: function(){
 		return this.url + '?' + $.param(this.query);
@@ -41,7 +48,7 @@ nyc.soda.Query.prototype = {
 	callback: function(data, csv, callback){
 		var data = this.csv() ? $.csv.toObjects(data) : data; 
 		if (callback) {
-			callback(data);
+			callback(data, this);
 		}
 	},
 	csv: function(){
@@ -55,3 +62,9 @@ nyc.soda.Query.prototype = {
 	}
 };
 
+nyc.soda.Query.and = function(where, more){
+	if (more){
+		return where + ' AND ' + more;
+	}
+	return where;	
+};
