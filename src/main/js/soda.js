@@ -43,7 +43,7 @@ nyc.soda.Query.prototype = {
 		return $.param(qry);
 	},
 	getUrlAndQuery: function(){
-		return this.url + '?' + $.param(this.query);
+		return this.url + '?' + this.qstr();
 	},
 	callback: function(data, csv, callback){
 		var data = this.csv() ? $.csv.toObjects(data) : data; 

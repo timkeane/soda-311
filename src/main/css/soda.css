@@ -212,10 +212,32 @@ table.leg-point.sr-leg td.leg-bin-4 img {
 .cd-info td:hover a {
 	color: #fff;
 }
-.list p, .dtail p {
+.list p, .detail p {
 	margin: 0;
 }
 .list .ui-collapsible-content, .detail .ui-collapsible-content {
 	padding: 0;
+}
+.list .ui-collapsible-content {
 	border: none;
+}
+.detail .sr {
+	padding: 5px;
+	border-bottom: 1px solid rgb(221,221,221);
+}
+.detail .sr-num {
+    background-color: rgba(0,0,0,.1);
+}
+.detail .sr.odd-row {
+    background-color: rgba(0,0,0,.1);
+}
+.detail .sr.odd-row .sr-num  {
+    background-color: #fff;
+}
+.detail .sr b {
+	margin: 5px 5px 0 0;
+	text-transform: capitalize;
+}
+.detail .sr .more {
+	display: none;
 }

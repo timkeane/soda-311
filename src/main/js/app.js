@@ -178,15 +178,18 @@ nyc.sr.App.prototype = {
 			where = nyc.soda.Query.and(where, 'x_coordinate_state_plane = ' + x);
 			where = nyc.soda.Query.and(where, 'y_coordinate_state_plane = ' + y);
 			soda = this.srListSoda;
+			callback = $.proxy(this.srList, this);
 		}
 		this.executeSoda(soda, where, callback);
+		return true;
 	},
 	cdList: function(data, soda){
 		this.listDetail.cdList(data, soda.query.where);
 		$('#loading').fadeOut();
 	},
-	srInfo: function(data){
-		
+	srList: function(data, soda){
+		this.listDetail.srList(data, soda.query.where);
+		$('#loading').fadeOut();
 	},
 	executeSoda: function(soda, where, callback){
 		$('#loading').fadeIn();
