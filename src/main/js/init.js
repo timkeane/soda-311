@@ -36,6 +36,19 @@ var srSoda = new nyc.soda.Query({
 	limit: 50000
 });
 
+var cdInfoSoda = new nyc.soda.Query({
+	url: OPEN_DATA_URL,
+	select: 'count(unique_key) AS sr_count, complaint_type',
+	group: 'complaint_type',
+	order: 'sr_count'
+});
+
+var srInfoSoda = new nyc.soda.Query({
+	url: OPEN_DATA_URL,
+	select: 'agency_name, complaint_type, descriptor, created_date, closed_date, resolution_description, incident_address, intersection_street_1, intersection_street_2, city, incident_zip',
+	order: 'complaint_type'
+});
+
 var map = new nyc.ol.Basemap({target: $('#map').get(0)});
 
 var geocoder = new nyc.Geoclient('https://maps.nyc.gov/geoclient/v1/search.json?app_key=74DF5DB1D7320A9A2&app_id=nyc-lib-example');
@@ -58,6 +71,8 @@ nyc.sr.app = new nyc.sr.App({
 	whereNotMappable: WHERE_NOT_MAPPABLE,
 	cdSoda: cdSoda,
 	srSoda: srSoda,
+	cdInfoSoda: cdInfoSoda,
+	srInfoSoda: srInfoSoda,
 	buckets: new nyc.sr.Buckets('#record-count span')
 });	
 

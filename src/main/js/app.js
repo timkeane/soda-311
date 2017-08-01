@@ -14,6 +14,8 @@ nyc.sr.App = function(options){
 	this.sodaTextarea = options.sodaTextarea;
 	this.cdSoda = options.cdSoda;
 	this.srSoda = options.srSoda;
+	this.cdInfoSoda = options.cdInfoSoda;
+	this.srInfoSoda = options.srInfoSoda;
 	this.buckets = options.buckets;
 	
 	this.defaultDates();
@@ -24,6 +26,8 @@ nyc.sr.App = function(options){
 	
 	this.mapRadio.on('change', $.proxy(this.changeMapType, this));
 
+	this.map.on('click', $.proxy(this.mapClick, this));
+	
 	this.initLegends();
 	this.runFirstQuery();
 };
@@ -58,7 +62,7 @@ nyc.sr.App.prototype = {
 	},
 	runFirstQuery: function(){
 		if (this.cdSrc.getFeatures().length){
-			this.sodaQuery();
+			this.sodaMapQuery();
 		}else{
 			var me = this;
 			setTimeout(function(){
@@ -68,14 +72,14 @@ nyc.sr.App.prototype = {
 	},
 	changeMapType: function(type){
 		this.mapType = type[0].name;
-		this.sodaQuery();
+		this.sodaMapQuery();
 	},
 	defaultDates: function(){
 		var today = new Date(), lastWeek = new Date();
 		lastWeek.setDate(lastWeek.getDate() - 7);
 		this.minDate = this.dateInput.container.find('#created-date-min');
 		this.maxDate = this.dateInput.container.find('#created-date-max');
-		this.dateInput.container.find('input').change($.proxy(this.sodaQuery, this));
+		this.dateInput.container.find('input').change($.proxy(this.sodaMapQuery, this));
 		this.minDate.val(lastWeek.toShortISOString());
 		this.maxDate.val(today.toShortISOString());
 	},
@@ -112,7 +116,7 @@ nyc.sr.App.prototype = {
 		});
 		this.dateInput.container.after(div);
 		div.trigger('create');
-		this.cdCheck.on('change', $.proxy(this.sodaQuery, this));		
+		this.cdCheck.on('change', $.proxy(this.sodaMapQuery, this));		
 	},
 	gotSrTypes: function(data){
 		var div = $('<div id="complaint-types"></div>');		
@@ -132,12 +136,16 @@ nyc.sr.App.prototype = {
 		});
 		this.sodaTextarea.container.before(div);		
 		div.trigger('create');
-		this.srTypeCheck.on('change', $.proxy(this.sodaQuery, this));
+		this.srTypeCheck.on('change', $.proxy(this.sodaMapQuery, this));
 	},
-	sodaQuery: function(){
-		var where = this.and(this.whereNotMappable, this.dateClause()), soda, callback;
+	buildWhereClause: function(){
+		var where = this.and(this.whereNotMappable, this.dateClause());
 		where = this.and(where, this.inClause('community_board', this.cdCheck));
 		where = this.and(where, this.inClause('complaint_type', this.srTypeCheck));
+		return where;
+	},
+	sodaMapQuery: function(){
+		var where = this.buildWhereClause(), soda, callback;
 		if (this.mapType == 'cd'){
 			soda = this.cdSoda;
 			callback = $.proxy(this.updateCdLayer, this);
@@ -145,9 +153,30 @@ nyc.sr.App.prototype = {
 			soda = this.srSoda;
 			callback = $.proxy(this.updateSrLayer, this);
 		}
+		this.executeSoda(soda, where, callback);
+	},
+	sodaInfoQuery: function(feature, layer){
+		var where = this.buildWhereClause(), soda, callback;
+		if (layer === me.cdLyr){
+			var cd = feature.html('id');
+			where = this.and(where, "community_board = '" + cd + "'");
+			soda = this.cdInfoSoda;
+		}else{
+			var x = feature.get('x_coordinate_state_plane');
+			var y = feature.get('y_coordinate_state_plane');
+			where = this.and(where, 'x_coordinate_state_plane = ' + x);
+			where = this.and(where, 'y_coordinate_state_plane = ' + y);
+			soda = this.srInfoSoda;
+		}
+		this.executeSoda(soda, where, callback);
+	},
+	executeSoda: function(soda, where, callback){
 		$('#loading').fadeIn();
 		soda.execute({where: where, callback: callback});
-		this.sodaTextarea.container.find('textarea').html(soda.getUrlAndQuery());
+		this.sodaTextarea.container.find('textarea').html(soda.getUrlAndQuery());		
+	},
+	mapClick: function(event){
+		this.map.forEachFeatureAtPixel(event.pixel, $.proxy(this.sodaInfoQuery, this));
 	},
 	dateClause: function(){
 		var where = "created_date >= '" + this.minDate.val() + "'";
