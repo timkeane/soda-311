@@ -54,9 +54,9 @@ nyc.sr.ListDetail.prototype = {
 					more.append(me.replace(moreFields[field], row));
 				}
 			}
-//			nyc.util.formatDateHtml({
-//				elements: detail.find('.sr-date')
-//			});
+			nyc.util.formatDateHtml({
+				elements: detail.find('.sr-date')
+			});
 		});
 		this.detailContainer.collapsible('expand');
 	},
@@ -112,14 +112,14 @@ nyc.sr.ListDetail.CD_LIST_HTML = '<table class="cd-info"><thead><tr><th>Count</t
 
 nyc.sr.ListDetail.CD_TR_HTML = '<tr><td>${sr_count}</td><td><a>${complaint_type}</a></td></tr>';
 
-nyc.sr.ListDetail.SR_DETAIL_HTML = '<div id="sr-${unique_key}" class="sr"><div class="sr-num"><b>SR number</b>${unique_key}</div><div><b>complaint type</b>${complaint_type}</div><div><b>agency</b>${agency_name}</div><div><b>created date</b><span class="sr-date">${created_date}</span></div><div><a data-role="button" onclick="$(this).parent().next().slideToggle();">Details...</a></div></div>';
+nyc.sr.ListDetail.SR_DETAIL_HTML = '<div id="sr-${unique_key}" class="sr"><div class="sr-num"><b>SR number:</b>${unique_key}</div><div><b>complaint type:</b>${complaint_type}</div><div><b>agency:</b>${agency_name}</div><div><b>created date:</b><span class="sr-date">${created_date}</span></div><div><a data-role="button" onclick="$(this).parent().next().slideToggle();">Details...</a></div></div>';
 
 nyc.sr.ListDetail.SR_DETAIL_MORE = {
-	incident_address: '<div><b>address</b><br>${incident_address}<br>${city}, NY ${incident_zip}</div>',
-	street_name: '<div><b>location</b><br>${street_name} btw. ${cross_Street_1} &amp; ${cross_Street_2}<br>${city}, NY ${incident_zip}</div>',
-	intersection_street_1: '<div><b>location</b><br>${intersection_street_1} and ${intersection_street_2}<br>${city}, NY ${incident_zip}</div>',
-	closed_date: '<div><b>closed date</b><span class="sr-date">${closed_date}<span></div>',
-	resolution_description: '<div><b>resolution</b><br>${resolution_description}</div>'
+	incident_address: '<div><b>address:</b><br>${incident_address}<br>${city}, NY ${incident_zip}</div>',
+	street_name: '<div><b>location:</b><br>${street_name} btw. ${cross_Street_1} &amp; ${cross_Street_2}<br>${city}, NY ${incident_zip}</div>',
+	intersection_street_1: '<div><b>location:</b><br>${intersection_street_1} and ${intersection_street_2}<br>${city}, NY ${incident_zip}</div>',
+	closed_date: '<div><b>closed date:</b><span class="sr-date">${closed_date}<span></div>',
+	resolution_description: '<div><b>resolution:</b><br>${resolution_description}</div>'
 };
 
 
