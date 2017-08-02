@@ -105,9 +105,6 @@ nyc.sr.App.prototype = {
 	},
 	changeMapType: function(type){
 		this.mapType = type[0].name;
-		this.highlightSrc.clear();
-		this.listDetail.listDetailContainer.hide();
-		this.listDetail.container.collapsible('collapse');
 		this.sodaMapQuery();
 	},
 	defaultDates: function(){
@@ -190,6 +187,9 @@ nyc.sr.App.prototype = {
 			callback = $.proxy(this.updateSrLayer, this);
 		}
 		this.executeSoda(soda, where, callback);
+		this.highlightSrc.clear();
+		this.listDetail.listDetailContainer.hide();
+		this.listDetail.container.collapsible('collapse');		
 	},
 	sodaInfoQuery: function(feature, layer){
 		var where = this.buildWhereClause(), soda, callback;
