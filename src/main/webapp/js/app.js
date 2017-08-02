@@ -22,6 +22,13 @@ nyc.sr.App = function(options){
 	
 	this.defaultDates();
 
+	this.highlightSrc = new ol.source.Vector({});
+	this.map.addLayer(new ol.layer.Vector({
+		source: this.highlightSrc, 
+		style: $.proxy(this.style.highlightStyle, this.style),
+		zIndex: 1000
+	}));
+	
 	this.srLyr = new ol.layer.Vector({style: $.proxy(this.style.srStyle, this.style)});
 	this.map.addLayer(this.srLyr);
 	new nyc.ol.FeatureTip(this.map, [{layer: this.srLyr, labelFunction: this.tip}]);
@@ -46,6 +53,7 @@ nyc.sr.App.prototype = {
 	map: null,
 	view: null,
 	cdChoices: null,
+	highlightSrc: null,
 	cdSrc: null,
 	cdLyr: null,
 	srLyr: null,
@@ -195,8 +203,13 @@ nyc.sr.App.prototype = {
 			soda = this.srListSoda;
 			callback = $.proxy(this.srList, this);
 		}
+		this.highlight(feature);
 		this.executeSoda(soda, where, callback);
 		return true;
+	},
+	highlight: function(feature){
+		this.highlightSrc.clear();
+		this.highlightSrc.addFeature(feature);
 	},
 	cdList: function(data, soda){
 		this.listDetail.cdList(data, soda.query.where);

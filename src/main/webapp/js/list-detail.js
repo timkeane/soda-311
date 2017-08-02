@@ -36,7 +36,7 @@ nyc.sr.ListDetail.prototype = {
 	cdSrTypeDrilldown: null,
 	srListDetail: function(data, soda, title){
 		var me = this;
-		var title = title || data[0].complaint_type;
+		var title = data.length + ' ' + (title || data[0].complaint_type);
 		var moreFields = nyc.sr.ListDetail.SR_DETAIL_MORE;
 		me.detail.empty();
 		me.detailTitle.html(title);
@@ -54,9 +54,9 @@ nyc.sr.ListDetail.prototype = {
 					more.append(me.replace(moreFields[field], row));
 				}
 			}
-			nyc.util.formatDateHtml({
-				elements: detail.find('.sr-date')
-			});
+//			nyc.util.formatDateHtml({
+//				elements: detail.find('.sr-date')
+//			});
 		});
 		this.detailContainer.collapsible('expand');
 	},
