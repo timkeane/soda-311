@@ -105,6 +105,9 @@ nyc.sr.App.prototype = {
 	},
 	changeMapType: function(type){
 		this.mapType = type[0].name;
+		this.highlightSrc.clear();
+		this.listDetail.listDetailContainer.hide();
+		this.listDetail.container.collapsible('collapse');
 		this.sodaMapQuery();
 	},
 	defaultDates: function(){
