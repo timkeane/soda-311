@@ -32,6 +32,12 @@ nyc.sr.App = function(options){
 	
 	this.map.on('click', $.proxy(this.mapClick, this));
 	
+	$(window).resize(function(){
+		if ($('#panel').width() != $(window).width()) {
+			$('#panel').show();
+		}
+	});
+	
 	this.initLegends();
 	this.runFirstQuery();
 };
@@ -61,26 +67,11 @@ nyc.sr.App.prototype = {
 	listDetail: null,
 	mapType: 'cd',
 	toggle: function(){
-		var pDiv = $('#panel'), w = $(window).width();
-		$('#record-count a.toggle').toggleClass('panel');
-		pDiv.animate({
-			width: pDiv.width() == w ? 0 : '100%'
-		},{
-			start: function(){
-				pDiv.fadeIn();
-			},
-			complete: function(){
-				pDiv[pDiv.width() == w ? 'show' : 'fadeOut']();
-			}
-		});
-
-		var mDiv = $('#map'), updateSize = $.proxy(this.map.updateSize, this.map); 
-		mDiv.animate({
-			width: mDiv.width() == w ? 0 : '100%'
-		},{
-			step: updateSize,
-			complete: updateSize
-		});
+		var pw = $('#panel').width(), ww = $(window).width();
+		if (pw == ww || pw == 0){
+			$('#record-count a.toggle').toggleClass('panel');
+			$('#panel').slideToggle();
+		}
 	},
 	initLegends: function(){
 		this.cdLeg = new nyc.BinLegend(
@@ -209,10 +200,12 @@ nyc.sr.App.prototype = {
 	},
 	cdList: function(data, soda){
 		this.listDetail.cdList(data, soda.query.where);
+		this.toggle();
 		$('#loading').fadeOut();
 	},
 	srList: function(data, soda){
 		this.listDetail.srList(data, soda.query.where);
+		this.toggle();
 		$('#loading').fadeOut();
 	},
 	executeSoda: function(soda, where, callback){
