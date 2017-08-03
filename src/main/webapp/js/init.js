@@ -104,8 +104,9 @@ new nyc.soda.Query().execute({
 	query: {
 		select: 'count(unique_key) AS sr_count, complaint_type',
 		group: 'complaint_type',
-		order: 'sr_count DESC',
-		where: "created_date >= '" + lastYear.toShortISOString() + "'",
+		order: 'sr_count DESC'
 	},
-	callback: $.proxy(nyc.sr.app.gotSrTypes, nyc.sr.app)
-});
+	filters: {
+		created_date: [{op: '>=', value: lastYear.toShortISOString()}]
+	}
+},$.proxy(nyc.sr.app.gotSrTypes, nyc.sr.app));
