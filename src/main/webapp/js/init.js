@@ -114,4 +114,4 @@ new nyc.soda.Query().execute({
 	filters: {
 		created_date: [{op: '>=', value: lastYear.toShortISOString()}]
 	}
-},$.proxy(nyc.sr.app.gotSrTypes, nyc.sr.app));
+}, $.proxy(nyc.sr.app.gotSrTypes, nyc.sr.app));
