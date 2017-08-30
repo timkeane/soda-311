@@ -1,4 +1,4 @@
-QUnit.module('nyc.cd.feature', {
+QUnit.module('nyc.sr.Buckets', {
 	beforeEach: function(assert){
 		$('body').append('<div id="record-count"><span></span></div>');
 	},

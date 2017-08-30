@@ -1,5 +1,9 @@
 nyc.sr = nyc.sr || {};
 
+Date.prototype.toShortISOString = function(){
+	return this.toISOString().split('T')[0];
+};
+
 nyc.sr.App = function(options){
 	this.map = options.map;
 	this.view = this.map.getView();
@@ -22,15 +26,16 @@ nyc.sr.App = function(options){
 	this.defaultDates();
 
 	this.highlightSrc = new ol.source.Vector({});
-	this.map.addLayer(new ol.layer.Vector({
+	this.highlightLyr = new ol.layer.Vector({
 		source: this.highlightSrc, 
 		style: $.proxy(this.style.highlightStyle, this.style),
 		zIndex: 1000
-	}));
+	});
+	this.map.addLayer(this.highlightLyr);
 	
 	this.srLyr = new ol.layer.Vector({style: $.proxy(this.style.srStyle, this.style)});
 	this.map.addLayer(this.srLyr);
-	new nyc.ol.FeatureTip(this.map, [{layer: this.srLyr, labelFunction: this.tip}]);
+	this.fTip = new nyc.ol.FeatureTip(this.map, [{layer: this.srLyr, labelFunction: this.tip}]);
 	
 	this.mapRadio.on('change', $.proxy(this.changeMapType, this));
 	this.sodaTextarea.container.find('textarea').click($.proxy(this.copyUrl, this));
@@ -53,6 +58,7 @@ nyc.sr.App.prototype = {
 	view: null,
 	cdChoices: null,
 	highlightSrc: null,
+	highlightLyr: null,
 	cdSrc: null,
 	cdLyr: null,
 	srLyr: null,
@@ -71,6 +77,7 @@ nyc.sr.App.prototype = {
 	srListSoda: null,
 	buckets: null,
 	listDetail: null,
+	fTip: null,
 	mapType: 'cd',
 	toggle: function(){
 		var pw = $('#panel').width(), ww = $(window).width();
