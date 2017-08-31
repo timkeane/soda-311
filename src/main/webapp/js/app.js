@@ -10,7 +10,7 @@ nyc.sr.App = function(options){
 	this.view.setMinZoom(9);
 	this.cdChoices = [];
 	options.cdDecorations.choices = this.cdChoices;
-	this.cdSrc = this.getCds(options);
+	this.getCds(options);
 	this.style = options.style;
 	this.legend = options.legend.container.find('.legend');
 	this.mapRadio = options.mapRadio;
@@ -35,7 +35,10 @@ nyc.sr.App = function(options){
 	
 	this.srLyr = new ol.layer.Vector({style: $.proxy(this.style.srStyle, this.style)});
 	this.map.addLayer(this.srLyr);
-	this.fTip = new nyc.ol.FeatureTip(this.map, [{layer: this.srLyr, labelFunction: this.tip}]);
+	this.tips = [];
+	this.tips.push(new nyc.ol.FeatureTip(this.map, [
+        {layer: this.srLyr, labelFunction: this.tip
+	}]));
 	
 	this.mapRadio.on('change', $.proxy(this.changeMapType, this));
 	this.sodaTextarea.container.find('textarea').click($.proxy(this.copyUrl, this));
@@ -77,7 +80,7 @@ nyc.sr.App.prototype = {
 	srListSoda: null,
 	buckets: null,
 	listDetail: null,
-	fTip: null,
+	tips: null,
 	mapType: 'cd',
 	toggle: function(){
 		var pw = $('#panel').width(), ww = $(window).width();
@@ -128,14 +131,16 @@ nyc.sr.App.prototype = {
 			{nativeProjection: 'EPSG:4326', projection: 'EPSG:3857'}
 		);
 		cdSrc.on(nyc.ol.source.Decorating.LoaderEventType.FEATURESLOADED, $.proxy(this.gotCds, this));
-		return cdSrc;
+		this.cdSrc = cdSrc;
 	},
 	gotCds: function(){
 		this.cdLyr = new ol.layer.Vector({
 			source: this.cdSrc, 
 			style: $.proxy(this.style.cdStyle, this.style)
 		});
-		new nyc.ol.FeatureTip(this.map, [{layer: this.cdLyr, labelFunction: this.tip}]);
+		this.tips.push(new nyc.ol.FeatureTip(this.map, [
+            {layer: this.cdLyr, labelFunction: this.tip}
+        ]));
 		this.map.addLayer(this.cdLyr);
 		this.creatCdCheck();
 	},

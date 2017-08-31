@@ -43,15 +43,28 @@ QUnit.module('nyc.sr.App', {
 			var div1 = $('<div id="record-count"><a class="toggle"></a></div>');
 			var div2 = $('<div id="panel" style="position:fixed"></div>');
 			$('body').append(div1).append(div2);
-
 		}());
 		
-		this.MOCK_CD_SODA = {};
-		this.MOCK_SR_SODA = {};
-		this.MOCK_CD_LIST_SODA = {};
-		this.MOCK_SR_LIST_SODA = {};
+		var MocSodaQuery = function(){
+			this.execute = function(){};
+			this.getUrlAndQuery = function(){};
+		};
+		
+		this.MOCK_CD_SODA = new MocSodaQuery();
+		this.MOCK_SR_SODA = new MocSodaQuery();
+		this.MOCK_CD_LIST_SODA = new MocSodaQuery();
+		this.MOCK_SR_LIST_SODA = new MocSodaQuery();
+		
 		this.MOCK_BUCKETS = {};
-		this.MOCK_LIST_DET = {};
+		
+		this.MOCK_LIST_DET = (function(){
+			var div = $('<div id="list-detail"></div>');
+			$('body').append(div);
+			return new nyc.sr.ListDetail({
+				target: '#list-detail',
+				cdSrTypeDrilldown: {}
+			});
+		}());
 		
 		this.OPTIONS = {
 			map: this.MAP,
@@ -71,7 +84,7 @@ QUnit.module('nyc.sr.App', {
 		};
 	},
 	afterEach: function(assert){
-		$('#map, #legend, #date-ranges, #map-type, #soda-url, #record-count, #panel').remove();
+		$('#map, #legend, #date-ranges, #map-type, #soda-url, #record-count, #panel, #list-detail').remove();
 		delete this.MAP;		
 		delete this.STYLE;
 		delete this.LEGEND;
@@ -150,7 +163,7 @@ QUnit.test('constructor', function(assert){
 
 	assert.ok($.inArray(app.srLyr, this.MAP.getLayers().getArray()) > -1);
 
-	assert.deepEqual(app.fTip.map, this.MAP);
+	assert.deepEqual(app.tips[0].map, this.MAP);
 	assert.deepEqual(app.srLyr.nycTip, app.tip);
 
 	this.MAP_RADIO.trigger('change');
@@ -342,4 +355,73 @@ QUnit.test('defaultDates', function(assert){
 	assert.deepEqual(actualEvent.target, app.maxDate.get(0));
 	
 	nyc.sr.App.prototype.sodaMapQuery = sodaMapQuery;
+});
+
+QUnit.test('getCds', function(assert){
+	assert.expect(6);
+	
+	var done = assert.async();
+	
+	var options = this.OPTIONS;
+	
+	var getCds = nyc.sr.App.prototype.getCds;
+	var gotCds = nyc.sr.App.prototype.gotCds;
+	var runFirstQuery = nyc.sr.App.prototype.runFirstQuery;
+
+	nyc.sr.App.prototype.getCds = function(){};
+	nyc.sr.App.prototype.gotCds = function(){};
+	nyc.sr.App.prototype.runFirstQuery = function(){};
+	
+	var app = new nyc.sr.App(options);
+	
+	app.getCds = getCds;
+	app.runFirstQuery = runFirstQuery;
+	
+	app.gotCds = function(){
+		var feature = app.cdSrc.getFeatures()[0];
+		assert.equal(app.cdSrc.getUrl(), 'data/cd.json');
+		for (var memb in nyc.cd.feature){
+			assert.deepEqual(feature[memb], nyc.cd.feature[memb]);
+		}
+		nyc.sr.App.prototype.getCds = getCds;		
+		nyc.sr.App.prototype.gotCds = gotCds;		
+		nyc.sr.App.prototype.runFirstQuery = runFirstQuery;		
+		done();
+	};
+	options.cdUrl = 'data/cd.json';
+
+	app.getCds(options);
+});
+
+QUnit.test('gotCds', function(assert){
+	assert.expect(5);
+	
+	var done = assert.async();
+	
+	var options = this.OPTIONS;
+	options.cdUrl = 'data/cd.json';
+	
+	var app;
+	
+	var creatCdCheck = nyc.sr.App.prototype.creatCdCheck;
+
+	nyc.sr.App.prototype.creatCdCheck = function(){
+		assert.ok(true);
+	};
+	
+	var gotCds = nyc.sr.App.prototype.gotCds;
+	nyc.sr.App.prototype.gotCds = function(){
+		gotCds.call(app);
+		assert.ok(app.cdLyr);
+		assert.deepEqual(app.tips[1].map, options.map);
+		assert.ok($.inArray(app.cdLyr, options.map.getLayers().getArray()) > -1);
+		assert.deepEqual(app.cdLyr.nycTip, app.tip);
+		nyc.sr.App.prototype.gotCds = gotCds;		
+		nyc.sr.App.prototype.creatCdCheck = creatCdCheck;
+		setTimeout(function(){
+			done();
+		}, 200);
+	};
+
+	app = new nyc.sr.App(options);
 });
