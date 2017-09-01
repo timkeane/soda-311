@@ -9,8 +9,8 @@ nyc.sr.App = function(options){
 	this.view = this.map.getView();
 	this.view.setMinZoom(9);
 	this.cdChoices = [];
-	this.tips = [];
 	options.cdDecorations.choices = this.cdChoices;
+	this.tips = [];
 	this.getCds(options);
 	this.style = options.style;
 	this.legend = options.legend.container.find('.legend');
@@ -64,6 +64,7 @@ nyc.sr.App.prototype = {
 	highlightLyr: null,
 	cdSrc: null,
 	cdLyr: null,
+	srSrc: null,
 	srLyr: null,
 	cdLeg: null,
 	srLeg: null,
@@ -256,10 +257,10 @@ nyc.sr.App.prototype = {
 	mapClick: function(event){
 		this.map.forEachFeatureAtPixel(event.pixel, $.proxy(this.sodaInfoQuery, this));
 	},
-	filterValues: function(checkboxes){
-		if (checkboxes && checkboxes.val().length){
+	filterValues: function(check){
+		if (check && check.val().length){
 			var values = [];
-			$.each(checkboxes.val(), function(){
+			$.each(check.val(), function(){
 				values.push(this.value);
 			});
 			return [{op: 'IN', value: values}];
@@ -283,7 +284,7 @@ nyc.sr.App.prototype = {
 	},
 	updateSrLayer: function(data){
 		var me = this;
-		var src = new nyc.ol.source.Decorating(
+		me.srSrc = new nyc.ol.source.Decorating(
 			{loader: new nyc.ol.source.CsvPointFeatureLoader({
 				url: me.srSoda.getUrlAndQuery(),
 				projection: 'EPSG:2263',
@@ -295,9 +296,9 @@ nyc.sr.App.prototype = {
 			{nativeProjection: 'EPSG:2263', projection: 'EPSG:3857'}
 		);
 
-		src.on(nyc.ol.source.Decorating.LoaderEventType.FEATURESLOADED, function(){
-			var buckets = me.buckets.build(data, src);
-			if (buckets.total == 50000){
+		me.srSrc.on(nyc.ol.source.Decorating.LoaderEventType.FEATURESLOADED, function(){
+			var buckets = me.buckets.build(data, me.srSrc);
+			if (buckets.total >= 50000){
 				$(me.mapRadio.inputs[1]).prop('disabled', true).checkboxradio('refresh');
 				$(me.mapRadio.inputs[0]).trigger('click').checkboxradio('refresh');
 			}else{
@@ -308,7 +309,7 @@ nyc.sr.App.prototype = {
 			}
 		});
 		
-		me.srLyr.setSource(src);
+		me.srLyr.setSource(me.srSrc);
 	},
 	tip: function(){
 		var count = this.get('sr_count') || '', txt = '';

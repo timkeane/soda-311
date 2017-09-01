@@ -6,7 +6,7 @@ QUnit.module('nyc.sr.App', {
 			return new nyc.ol.Basemap({target: div.get(0)});
 		}());
 		
-		this.STYLE = new nyc.sr.Style();
+		this.STYLE = {};
 		
 		this.LEGEND = (function(){
 			var div = $('<div id="legend"><div class="legend"></div></div>');
@@ -83,98 +83,9 @@ QUnit.module('nyc.sr.App', {
 			listDetail: this.MOCK_LIST_DET
 		};
 		
-		this.SR_TYPES = [{
-				complaint_type: 'Noise - Residential',
-				sr_count: '227780'
-			},
-			{
-				complaint_type: 'HEAT/HOT WATER',
-				sr_count: '210597'
-			},
-			{
-				complaint_type: 'Illegal Parking',
-				sr_count: '138591'
-			},
-			{
-				complaint_type: 'Blocked Driveway',
-				sr_count: '130109'
-			},
-			{
-				complaint_type: 'Street Condition',
-				sr_count: '95516'
-			},
-			{
-				complaint_type: 'Street Light Condition',
-				sr_count: '83615'
-			},
-			{
-				complaint_type: 'UNSANITARY CONDITION',
-				sr_count: '79531'
-			},
-			{
-				complaint_type: 'Noise - Street/Sidewalk',
-				sr_count: '69217'
-			},
-			{
-				complaint_type: 'Water System',
-				sr_count: '65668'
-			},
-			{
-				complaint_type: 'Noise',
-				sr_count: '59175'
-			},
-			{
-				complaint_type: 'PAINT/PLASTER',
-				sr_count: '58744'
-			},
-			{
-				complaint_type: 'PLUMBING',
-				sr_count: '51254'
-			},
-			{
-				complaint_type: 'Noise - Commercial',
-				sr_count: '47608'
-			},
-			{
-				complaint_type: 'Sanitation Condition',
-				sr_count: '37331'
-			},
-			{
-				complaint_type: 'Traffic Signal Condition',
-				sr_count: '36128'
-			},
-			{
-				complaint_type: 'DOOR/WINDOW',
-				sr_count: '35752'
-			},
-			{
-				complaint_type: 'Dirty Conditions',
-				sr_count: '35149'
-			},
-			{
-				complaint_type: 'Sewer',
-				sr_count: '34491'
-			},
-			{
-				complaint_type: 'Rodent',
-				sr_count: '34442'
-			},
-			{
-				complaint_type: 'Missed Collection (All Materials)',
-				sr_count: '34281'
-			},
-			{
-				complaint_type: 'DOF Literature Request',
-				sr_count: '33130'
-			},
-			{
-				complaint_type: 'Derelict Vehicle',
-				sr_count: '32908'
-			},
-			{
-				complaint_type: 'WATER LEAK',
-				sr_count: '32683'
-		}];
+		this.SR_TYPE_COUNT = SR_TYPE_COUNT;
+		this.SR_COUNT_BY_CD = SR_COUNT_BY_CD;
+		this.SR_COUNT_BY_LOCATION = SR_COUNT_BY_LOCATION;
 	},
 	afterEach: function(assert){
 		$('#map, #legend, #date-ranges, #map-type, #soda-url, #record-count, #panel, #list-detail, #community-districts, #complaint-types').remove();
@@ -191,7 +102,7 @@ QUnit.module('nyc.sr.App', {
 		delete this.MOCK_BUCKETS;
 		delete this.MOCK_LIST_DET;
 		delete this.OPTIONS;
-		delete this.SR_TYPES;
+		delete this.SR_TYPE_COUNT;
 		delete nyc.cd.feature.choices;
 	}
 });
@@ -402,7 +313,7 @@ QUnit.test('runFirstQuery (cds loaded late)', function(assert){
 	setTimeout(function(){
 		assert.ok(true);
 		app.cdSrc.getFeatures = function(){return [{}];};
-	}, 300);
+	}, 500);
 });
 
 QUnit.test('changeMapType', function(assert){
@@ -559,7 +470,7 @@ QUnit.test('gotSrTypes', function(assert){
 	};
 
 	var expectedChoices = [];
-	$.each(this.SR_TYPES, function(i, typ){
+	$.each(this.SR_TYPE_COUNT, function(i, typ){
 		expectedChoices.push({
 		    checked: false,
 			name: 'complaint_type',
@@ -568,7 +479,7 @@ QUnit.test('gotSrTypes', function(assert){
 		});
 		return i < 9;
 	});
-	app.gotSrTypes(this.SR_TYPES);
+	app.gotSrTypes(this.SR_TYPE_COUNT);
 	
 	assert.equal(app.srTypeCheck.inputs.length, 10);
 	assert.deepEqual(app.srTypeCheck.choices, expectedChoices);
@@ -877,4 +788,252 @@ QUnit.test('srList', function(assert){
 		done();
 	}, 600);
 });
+
+QUnit.test('executeSoda', function(assert){
+	assert.expect(3);
+
+	var url = 'https://data.cityofnewyork.us/resource/fhrw-4uyv.csv?$select=co1,%20col2&$where=col3%20IS%20NOT%20NULL';
+	var mockSoda = {
+		execute: function(filters, callback){
+			assert.equal(filters.filters, 'mock-filters');
+			assert.equal(callback, 'mock-callback');
+		},
+		getUrlAndQuery: function(){
+			return url;
+		}
+	};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+	
+	app.executeSoda(mockSoda, 'mock-filters', 'mock-callback');	
+	
+	assert.equal(app.sodaTextarea.container.find('textarea').html(), 'https://data.cityofnewyork.us/resource/fhrw-4uyv.csv?$select=co1, col2&amp;$where=col3 IS NOT NULL');
+});
+
+QUnit.test('mapClick', function(assert){
+	assert.expect(5);
+
+	this.OPTIONS.map.forEachFeatureAtPixel = function(pix, fn){
+		assert.equal(pix[0], 1);
+		assert.equal(pix[1], 2);
+		assert.equal(fn, 'mock-proxy');
+	};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+	
+	var proxy = $.proxy;
+	
+	$.proxy = function(fn, scope){
+		assert.deepEqual(fn, app.sodaInfoQuery);
+		assert.deepEqual(scope, app);
+		return 'mock-proxy';
+	};
+	
+	app.mapClick({pixel: [1, 2]});
+	
+	$.proxy = proxy;
+});
+
+QUnit.test('filterValues', function(assert){
+	assert.expect(3);
+
+	var values = [{value: 1}, {value: 2}, {value: 3}];
+	var mockCheck = {
+		val: function(){
+			return values;
+		}
+	};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+	
+	assert.notOk(app.filterValues());
+	assert.deepEqual(app.filterValues(mockCheck), [{op: 'IN', value: [1, 2, 3]}]);
+
+	values = [];
+
+	assert.notOk(app.filterValues(mockCheck));
+});
+
+QUnit.test('updateCdLayer', function(assert){
+	assert.expect(156);
+
+	var done = assert.async();
+	
+	var countByCd = this.SR_COUNT_BY_CD;
+	
+	var options = this.OPTIONS;
+	options.cdUrl = 'data/cd.json';
+
+	var updateCdLayer = nyc.sr.App.prototype.updateCdLayer;
+	nyc.sr.App.prototype.updateCdLayer = function(){};
+	
+	var app = new nyc.sr.App(options);
+	
+	app.cdLeg.html = function(title, bins){
+		assert.equal(title, 'Service Requests by<br>Community District');
+		assert.equal(bins, 'mock-breaks');
+		return 'mock-legend-html';
+	};
+	
+	app.updateCdLayer = updateCdLayer;
+	
+	var total = 50001;
+	app.buckets.build = function(data, source){
+		assert.deepEqual(data, countByCd);
+		return {buckets: 'mock-buckets', breaks: 'mock-breaks', total: total};
+	};
+
+	var test = function(moreThan50k){
+
+		assert.notOk(app.srLyr.getVisible());
+		assert.ok(app.cdLyr.getVisible());
+		assert.equal(app.style.buckets, 'mock-buckets');
+		assert.equal(app.legend.html(), 'mock-legend-html');
+		assert[moreThan50k ? 'ok' : 'notOk']($(app.mapRadio.inputs[1]).prop('disabled'));
+		
+		$.each(countByCd, function(i){
+			var feature = app.cdSrc.getFeatureById(this.id);
+			assert.equal(feature.get('sr_count'), this.sr_count, i + '');
+		});
+	};
+	
+	var intv = setInterval(function(){
+		if (app.cdSrc.getFeatures().length){
+			clearInterval(intv);
+
+			app.cdLyr.dispatchEvent = function(event){
+				assert.equal(event, 'change');
+			};
+	
+			app.updateCdLayer(countByCd);
+			test(true);
+			
+			total = 10;
+			app.updateCdLayer(countByCd);
+			test(false);
+			
+			done();
+		}		
+	}, 500);
+});
+
+QUnit.test('updateSrLayer (total > 50000)', function(assert){
+	assert.expect(121);
+
+	var done = assert.async();
+	
+	var srData = this.SR_COUNT_BY_LOCATION;
+	
+	var updateSrLayer = nyc.sr.App.prototype.updateSrLayer;
+	nyc.sr.App.prototype.updateSrLayer = function(){};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+	
+	app.updateSrLayer = updateSrLayer;
+	
+	app.srSoda.getUrlAndQuery = function(){
+		return 'data/sr-count-by-location.csv';
+	};
+
+	app.buckets.build = function(data, source){
+		assert.deepEqual(data, srData);
+		return {buckets: 'mock-buckets', breaks: 'mock-breaks', total: 50001};
+	};
+	
+	app.mapRadio.inputs[0].click(function(){
+		assert.ok(true)
+	});
+	
+	app.style.buckets = 'unchanged';
+	
+	app.updateSrLayer(srData);
+
+	var intv = setInterval(function(){
+		if (app.srSrc && app.srSrc.getFeatures().length){
+			clearInterval(intv);
+
+			$.each(srData, function(){
+				var feature = app.srSrc.getFeatureById(this.id);
+				var wmCoords = feature.getGeometry().getCoordinates();
+				var spCoords = proj4('EPSG:2263', 'EPSG:3857', [this.x_coordinate_state_plane, this.y_coordinate_state_plane]);
+				
+				assert.deepEqual(wmCoords, spCoords);
+				assert.equal(feature.get('sr_count'), this.sr_count);
+			});
+
+			assert.equal(app.style.buckets, 'unchanged');
+			assert.deepEqual(app.srLyr.getSource(), app.srSrc);
+			assert.ok($(app.mapRadio.inputs[1]).prop('disabled'));
+
+			nyc.sr.App.prototype.updateSrLayer = updateSrLayer;
+			done();			
+		}		
+	}, 500);
+});
+
+QUnit.test('updateSrLayer (total < 50000)', function(assert){
+	assert.expect(124);
+
+	var done = assert.async();
+	
+	var srData = this.SR_COUNT_BY_LOCATION;
+	
+	var updateSrLayer = nyc.sr.App.prototype.updateSrLayer;
+	nyc.sr.App.prototype.updateSrLayer = function(){};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+	
+	app.updateSrLayer = updateSrLayer;
+	
+	app.cdLyr = {
+		setVisible: function(vis){
+			assert.notOk(vis);
+		}
+	};
+	
+	app.srLeg.html = function(title, bins){
+		assert.equal(title, 'Service Requests by Location');
+		assert.equal(bins, 'mock-breaks');
+		return 'mock-legend-html';
+	};
+	
+	app.srSoda.getUrlAndQuery = function(){
+		return 'data/sr-count-by-location.csv';
+	};
+
+	app.buckets.build = function(data, source){
+		assert.deepEqual(data, srData);
+		return {buckets: 'mock-buckets', breaks: 'mock-breaks', total: 10};
+	};
+	
+	app.mapRadio.inputs[0].click(function(){
+		assert.ok(false)
+	});
+	
+	app.updateSrLayer(srData);
+
+	var intv = setInterval(function(){
+		if (app.srSrc && app.srSrc.getFeatures().length){
+			clearInterval(intv);
+
+			$.each(srData, function(){
+				var feature = app.srSrc.getFeatureById(this.id);
+				var wmCoords = feature.getGeometry().getCoordinates();
+				var spCoords = proj4('EPSG:2263', 'EPSG:3857', [this.x_coordinate_state_plane, this.y_coordinate_state_plane]);
+				
+				assert.deepEqual(wmCoords, spCoords);
+				assert.equal(feature.get('sr_count'), this.sr_count);
+			});
+			
+			assert.equal(app.style.buckets, 'mock-buckets');
+			assert.deepEqual(app.srLyr.getSource(), app.srSrc);	
+			assert.notOk($(app.mapRadio.inputs[1]).prop('disabled'));
+			assert.ok(app.srLyr.getVisible());
+			
+			nyc.sr.App.prototype.updateSrLayer = updateSrLayer;
+			done();			
+		}		
+	}, 500);
+});
+
 
