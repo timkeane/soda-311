@@ -34,7 +34,7 @@ QUnit.module('nyc.sr.App', {
 		}());
 		
 		this.TEXTAREA = (function(){
-			var div = $('<div id="soda-url"></div><textarea></textarea></div>');
+			var div = $('<div id="soda-url"><textarea></textarea></div>');
 			$('body').append(div);
 			return new nyc.Collapsible({target: '#soda-url', title: 'NYC OpenData URL'});  
 		}());
@@ -1053,4 +1053,49 @@ QUnit.test('tip', function(assert){
 	mockFeature.tip = nyc.sr.App.prototype.tip;
 	
 	assert.equal(mockFeature.tip().text, '<b>mock-label</b><br>mock-count Service Requests');
+});
+
+QUnit.test('copyUrl', function(assert){
+	assert.expect(6);
+
+	var done = assert.async();
+	
+	var execCommand = document.execCommand;
+	
+	document.execCommand = function(cmd){
+		assert.equal(cmd, 'copy');
+	};
+	
+	var app = new nyc.sr.App(this.OPTIONS);
+
+	var tip = $('<div class="tip"></div>').css({
+		display: 'none',
+		position: 'sticky',
+		float: 'left',
+		margin: '10px 0 -75px',
+		'z-index': 2000
+	});
+	app.sodaTextarea.container.css({position: 'fixed', left: '-1000px', top: '-1000px'}).append(tip);
+	
+	var textarea = app.sodaTextarea.container.find('textarea');
+	
+	var pos = textarea.position();
+	
+	assert.notOk(tip.is(':visible'));
+	
+	textarea.trigger('click');
+
+	assert.equal(tip.css('left'), pos.left + 'px');
+	assert.equal(tip.css('top'), pos.top + 'px');
+	
+	setTimeout(function(){
+		assert.ok(tip.is(':visible'));		
+		$(document).trigger('click');
+		setTimeout(function(){
+			assert.notOk(tip.is(':visible'));
+			done();
+		}, 600);
+	}, 600);
+	
+	document.execCommand = execCommand;
 });
