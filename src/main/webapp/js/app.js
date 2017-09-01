@@ -9,6 +9,7 @@ nyc.sr.App = function(options){
 	this.view = this.map.getView();
 	this.view.setMinZoom(9);
 	this.cdChoices = [];
+	this.tips = [];
 	options.cdDecorations.choices = this.cdChoices;
 	this.getCds(options);
 	this.style = options.style;
@@ -35,7 +36,6 @@ nyc.sr.App = function(options){
 	
 	this.srLyr = new ol.layer.Vector({style: $.proxy(this.style.srStyle, this.style)});
 	this.map.addLayer(this.srLyr);
-	this.tips = [];
 	this.tips.push(new nyc.ol.FeatureTip(this.map, [
         {layer: this.srLyr, labelFunction: this.tip
 	}]));
@@ -142,9 +142,9 @@ nyc.sr.App.prototype = {
             {layer: this.cdLyr, labelFunction: this.tip}
         ]));
 		this.map.addLayer(this.cdLyr);
-		this.creatCdCheck();
+		this.createCdCheck();
 	},
-	creatCdCheck: function(){
+	createCdCheck: function(){
 		var div = $('<div id="community-districts"></div>');		
 		this.cdChoices.sort(function(a, b){
 			var aCd = a.sort, bCd = b.sort;
@@ -185,7 +185,7 @@ nyc.sr.App.prototype = {
 		var filters = {
 			created_date: this.dateFilters(),
 			community_board: this.filterValues(this.cdCheck),
-			complaint_type: this.filterValues(this.srTypeCheck),
+			complaint_type: this.filterValues(this.srTypeCheck)
 		};
 		props = props || {};
 		if (props.x_coordinate_state_plane){
@@ -220,7 +220,6 @@ nyc.sr.App.prototype = {
 	sodaInfoQuery: function(feature, layer){
 		var filters = this.getFilters(feature.getProperties()), soda, callback;
 		if (layer === this.cdLyr){
-			var cd = feature.getId();
 			soda = this.cdListSoda;
 			callback = $.proxy(this.cdList, this);
 		}else{
