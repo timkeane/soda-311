@@ -34,7 +34,7 @@ QUnit.module('nyc.sr.App', {
 		}());
 		
 		this.TEXTAREA = (function(){
-			var div = $('<div id="soda-url"><textarea></textarea></div>');
+			var div = $('<div id="soda-url"></div><textarea></textarea></div>');
 			$('body').append(div);
 			return new nyc.Collapsible({target: '#soda-url', title: 'NYC OpenData URL'});  
 		}());
@@ -1036,4 +1036,21 @@ QUnit.test('updateSrLayer (total < 50000)', function(assert){
 	}, 500);
 });
 
-
+QUnit.test('tip', function(assert){
+	assert.expect(1);
+	
+	var mockFeature = {
+		getLabel: function(){
+			return 'mock-label';
+		},
+		get: function(prop){
+			if (prop == 'sr_count'){
+				return 'mock-count';
+			}
+		}
+	};
+	
+	mockFeature.tip = nyc.sr.App.prototype.tip;
+	
+	assert.equal(mockFeature.tip().text, '<b>mock-label</b><br>mock-count Service Requests');
+});
